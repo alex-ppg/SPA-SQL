@@ -32,9 +32,21 @@ BEGIN
 	SET @DynamicSQL = N'SELECT * INTO ' + @temp_table + ' FROM ' + @table + ';TRUNCATE TABLE ' + @table
 
 	EXEC(@DynamicSQL)
-
-	/* Re-seed the old table with a new increment value */
-	DBCC CHECKIDENT(@table, RESEED, @incrementValue)
+	
+	/* Try to reseed the auto incrementing column. If it doesn't exist, catch it and notify appropriately */
+	BEGIN TRY
+		/* Re-seed the old table with a new increment value */
+		DBCC CHECKIDENT(@table, RESEED, @incrementValue)
+	END TRY
+	BEGIN CATCH
+		PRINT 'Table ' + @table + ' has no auto incrementing column'
+		
+		/* Reset table back to original state, command explained below
+		SET @DynamicSQL = N'INSERT INTO ' + @table + '(' + @columns + ') SELECT * FROM ' + @temp_table + ';DROP TABLE ' + @temp_table
+		EXEC(@DynamicSQL)
+		
+		RETURN
+	END CATCH
 	
 	/* Get the column names of all data in our old table except the re-seeded column.
 		
