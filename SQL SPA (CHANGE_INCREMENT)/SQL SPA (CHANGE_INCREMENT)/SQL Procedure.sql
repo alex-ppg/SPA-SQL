@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE CHANGE_INCREMENT 
+CREATE PROCEDURE CHANGE_INCREMENT 
 	@table varchar(100), 
 	@column varchar(100), 
 	@incrementValue int
@@ -7,6 +7,18 @@ AS
 	DECLARE @DynamicSQL VARCHAR(1000)
 	DECLARE @columns VARCHAR(8000)
 BEGIN
+	/* Ensure that the Query is valid i.e. column & table exist */
+	IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @table AND COLUMN_NAME = @column)
+	BEGIN
+		IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @table)
+		BEGIN
+			PRINT 'Invalid Query: Table ' + @table + ' not found within Database'
+			RETURN
+		END
+		PRINT 'Invalid Query: Column ' + @column + ' not found within Table ' + @table
+		RETURN
+	END
+
 	/* Create a Temporary Table Name. Requires two ## to declare it as a global-temporary value */
 	SET @temp_table = '##TEMP_TABLE_' + CAST((FLOOR(RAND()*(100))) AS VARCHAR(3))
 
