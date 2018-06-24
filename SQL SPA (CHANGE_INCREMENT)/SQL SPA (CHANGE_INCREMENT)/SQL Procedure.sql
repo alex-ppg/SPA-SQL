@@ -1,7 +1,7 @@
 CREATE PROCEDURE CHANGE_INCREMENT 
 	@table varchar(100), 
 	@column varchar(100), 
-	@incrementValue int
+	@resetValue int
 AS
 	DECLARE @temp_table VARCHAR(15)
 	DECLARE @DynamicSQL VARCHAR(1000)
@@ -36,12 +36,12 @@ BEGIN
 	/* Try to reseed the auto incrementing column. If it doesn't exist, catch it and notify appropriately */
 	BEGIN TRY
 		/* Re-seed the old table with a new increment value */
-		DBCC CHECKIDENT(@table, RESEED, @incrementValue)
+		DBCC CHECKIDENT(@table, RESEED, @resetValue)
 	END TRY
 	BEGIN CATCH
 		PRINT 'Table ' + @table + ' has no auto incrementing column'
 		
-		/* Reset table back to original state, command explained below
+		/* Reset table back to original state, command explained below */
 		SET @DynamicSQL = N'INSERT INTO ' + @table + '(' + @columns + ') SELECT * FROM ' + @temp_table + ';DROP TABLE ' + @temp_table
 		EXEC(@DynamicSQL)
 		
